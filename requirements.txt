@@ -1,0 +1,9 @@
+
+print(f"Loaded {len(documents)} meeting transcripts")
+
+
+
+
+db = Chroma.from_documents(documents=chunks, embedding=embeddings, collection_name="meeting_database", persist_directory=CHROMA_DB_PATH)
+
+print(f"Chroma DB created and saved at {CHROMA_DB_PATH}")
