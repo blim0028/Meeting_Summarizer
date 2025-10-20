@@ -8,6 +8,7 @@ class GraphState(TypedDict):
     query: str
     rag_response: str
     final_response: str
+    task_created: list[str]
 
 async def rag_node(state: GraphState):
     query = state["query"]
@@ -30,7 +31,7 @@ async def task_decision_node(state: GraphState):
         return {"decision": "create_task"}  
     else:
         print("No task in task detection node")
-        return {"decision": "no_task"}
+        return {"decision": "no_task", "task_created": []}
 
 async def trello_node(state: GraphState):
     extract_prompt = (
@@ -49,9 +50,7 @@ async def trello_node(state: GraphState):
 
     try:
         tasks = json.loads(cleaned)
-        print("JSON HERE")
     except:
-        print("EMPTY HERE")
         tasks = []
 
     results = []
@@ -61,16 +60,24 @@ async def trello_node(state: GraphState):
             results.append(result)
 
         print("Trello task creation node")
+
         return {
-            "final_response": f"{state['rag_response']}\n\nCreated tasks:\n" + "\n".join(results)
+            "task_created": results,
+            "final_response": f"{state['rag_response']}"
         }
     else:
         print("No tasks node")
-        return {"final_response": state["rag_response"]}
+        return {
+            "task_created": [],
+            "final_response": state["rag_response"]
+        } 
 
 def end_node(state: GraphState):
     print("END NODE")
-    return {"final_response": state["rag_response"]}
+    return {
+            "final_response": state["rag_response"],
+            "task_created" : state.get("task_created", [])
+        }
 
 # Build workflow
 workflow = StateGraph(GraphState)
